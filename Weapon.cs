@@ -9,7 +9,7 @@ public class Weapon : Collidable
     public int[] damagePoint = { 1, 2, 3, 4 };
     public float[] pushForce = { 2.0f, 3.0f, 4.0f, 5.0f };
 
-    public int[] magciDamagePoint = { 1, 2, 3, 4 };
+    public int[] magciDamagePoint = { 10, 20, 30, 4 };
     public float[] magicPushForce = { 2.0f, 3.0f, 4.0f, 5.0f };
 
     //Upgrade
@@ -18,6 +18,7 @@ public class Weapon : Collidable
     public int magicWeaponLevel = 0;
     public Animator anim;
     public Transform firePoint;
+    public Transform firemagicFirePoint;
     public GameObject bullet;
 
     private const string SWORDIDLE = "weapon_idle";
@@ -28,11 +29,13 @@ public class Weapon : Collidable
     private float cooldown = 0.15f;
     private float lastSwing;
     public SpriteRenderer sprRenderer;
+    public LineRenderer lineRend;
     private int playerType;
     private int currAnimationState;
     private string currAnimation;
     private float swordSwingTime = 0.3f;
     private float magicWandFireTime = 0.9f;
+    private float fireMagicWandFireTime = 1.0f;
     private bool lastState;
     public bool walkState;
 
@@ -52,10 +55,49 @@ public class Weapon : Collidable
         currAnimation = "";
     }
 
+    private void lazerShoot()
+    {
+        lineRend.enabled = true;
+        if (GameManager.instance.player.transform.localScale.x == -1)
+            firemagicFirePoint.right = new Vector3(-1f, 0f, 0f);
+        else if (GameManager.instance.player.transform.localScale.x == 1)
+            firemagicFirePoint.right = new Vector3(1f, 0f, 0f);
+        RaycastHit2D hitInfo = Physics2D.Raycast(firemagicFirePoint.position, firemagicFirePoint.right);
+        int magicWeaponLevel = GameManager.instance.weapon.magicWeaponLevel;
+        if (hitInfo)
+        {
+            lineRend.SetPosition(0, firemagicFirePoint.position);
+            lineRend.SetPosition(1, hitInfo.point);
+        }
+        else
+        {
+            lineRend.SetPosition(0, firemagicFirePoint.position);
+            lineRend.SetPosition(1, firemagicFirePoint.position + firemagicFirePoint.right * 100);
+        }
+
+        if (hitInfo.collider.name == "monster1" || hitInfo.collider.name == "monster0")
+        {
+            Damage dmg = new Damage
+            {
+                damageAmount = magciDamagePoint[magicWeaponLevel],
+                origin = transform.position,
+                pushForce = magicPushForce[magicWeaponLevel],
+            };
+
+            hitInfo.collider.SendMessage("ReciveDamage", dmg);
+
+        }
+    }
+
+    private void turnOffLazer()
+    {
+        lineRend.enabled = false;
+    }
+
     private void Shoot()
     {
         Debug.Log("bullet spawn");
-        Instantiate(bullet, firePoint.position, firePoint.rotation);
+        Instantiate(bullet, firePoint.position, firePoint.rotation, GameManager.instance.weapon.transform);
     }
 
     private void Swing(int playerType, int state)
@@ -134,7 +176,11 @@ public class Weapon : Collidable
                 else if (playerType == 1)
                 {
                     if (magicWeaponLevel == 0)
+                    {
                         ChangeAnimationState("fireMagicWand_fire");
+                        Invoke("lazerShoot", 0.6f);
+                        Invoke("turnOffLazer", 1.0f);
+                    }
                     else if (magicWeaponLevel == 1)
                     {
                         ChangeAnimationState(MAGICWANDFIRE);
@@ -154,7 +200,14 @@ public class Weapon : Collidable
                 else if (weaponLevel == 2)
                     ChangeAnimationState("redSword_idle");
             }
-            else if (playerType == 1 && Time.time - lastSwing > magicWandFireTime)
+            else if (playerType == 1 && Time.time - lastSwing > magicWandFireTime && magicWeaponLevel == 1)
+            {
+                if (magicWeaponLevel == 1)
+                    ChangeAnimationState("magicWand_walk");
+                else if (magicWeaponLevel == 0)
+                    ChangeAnimationState("fireMagicWand_walk");
+            }
+            else if (playerType == 1 && Time.time - lastSwing > fireMagicWandFireTime && magicWeaponLevel == 0)
             {
                 if (magicWeaponLevel == 1)
                     ChangeAnimationState("magicWand_walk");
@@ -173,7 +226,14 @@ public class Weapon : Collidable
                 else if (weaponLevel == 2)
                     ChangeAnimationState("redSword_idle");
             }
-            else if (playerType == 1 && Time.time - lastSwing > magicWandFireTime)
+            else if (playerType == 1 && Time.time - lastSwing > magicWandFireTime && magicWeaponLevel == 1)
+            {
+                if (magicWeaponLevel == 0)
+                    ChangeAnimationState("fireMagicWand_idle");
+                else if (magicWeaponLevel == 1)
+                    ChangeAnimationState(MAGICWANDIDLE);
+            }
+            else if (playerType == 1 && Time.time - lastSwing > fireMagicWandFireTime && magicWeaponLevel == 0)
             {
                 if (magicWeaponLevel == 0)
                     ChangeAnimationState("fireMagicWand_idle");
@@ -241,8 +301,6 @@ public class Weapon : Collidable
             };
 
             coll.SendMessage("ReciveDamage", dmg);
-
-            Debug.Log(coll.name);
         }
     }
 }

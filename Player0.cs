@@ -22,6 +22,7 @@ public class Player0 : Mover
         anim = GetComponent<Animator>();
         currSkinID = 0;
         currAnimation = "";
+
         DontDestroyOnLoad(gameObject);
     }
 
@@ -44,8 +45,6 @@ public class Player0 : Mover
                 GameManager.instance.weapon.walkState = false;
             }
 
-            // anim.SetInteger("CharacterID", 0);
-            // anim.SetFloat("xSpeed", Mathf.Abs(x));
         }
         else if (currSkinID == 1)
         {
@@ -60,9 +59,6 @@ public class Player0 : Mover
                 GameManager.instance.weapon.walkState = false;
             }
 
-
-            // anim.SetInteger("CharacterID", 1);
-            // anim.SetFloat("xSpeed1", Mathf.Abs(x));
         }
 
         if (Time.time - lastImmune > immuneTime / 2)

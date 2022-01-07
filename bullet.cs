@@ -12,15 +12,17 @@ public class bullet : MonoBehaviour
 
     private int[] magciDamagePoint = { 10, 20, 30, 4 };
     private float[] magicPushForce = { 4.0f, 6.0f, 8.0f, 10.0f };
+    private Transform tran;
     private void Start()
     {
+        tran = GetComponent<Transform>();
+        rb = GetComponent<Rigidbody2D>();
         if (GameManager.instance.player.transform.localScale.x == -1)
         {
-            transform.localScale = new Vector3(-1, 1, 1);
-            rb.velocity = -transform.right * speed;
+            rb.velocity = -tran.right * speed;
         }
         else
-            rb.velocity = transform.right * speed;
+            rb.velocity = tran.right * speed;
     }
 
     private void OnTriggerEnter2D(Collider2D hitInfo)
